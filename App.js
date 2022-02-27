@@ -51,6 +51,7 @@ export default function App() {
         text: "I'm Sure",
         style: "destructive",
         onPress: () => {
+          // useState는 mutate가 안되기 때문에 새로운 객체 생성 후 delete 사용 가능
           const newToDos = { ...toDos };
           delete newToDos[key];
           setToDos(newToDos);
