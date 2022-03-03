@@ -19,7 +19,7 @@ Object {
 }
 ```
 
-- [ ] Edit 기능 추가(Edit 누르면 Text부분 Input으로 보이고, 최근 기록으로 저장)
+- [x] Edit 기능 추가(Edit 누르면 Text부분 Input으로 보이고, 최근 기록으로 저장)
 - [ ] 정렬 기능(최신, 오래된)
 - [ ] 라이트/다크 모드
 - [ ] Code Refactoring

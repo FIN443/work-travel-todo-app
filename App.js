@@ -21,6 +21,7 @@ const STATE_KEY = "@state";
 export default function App() {
   const [working, setWorking] = useState(true);
   const [text, setText] = useState("");
+  const [editText, setEditText] = useState("");
   const [toDos, setToDos] = useState({});
   const travel = async () => {
     setWorking(false);
@@ -31,6 +32,7 @@ export default function App() {
     await saveWorkState(true);
   };
   const onChangeText = (payload) => setText(payload);
+  const onChangeEditText = (payload) => setEditText(payload);
   const saveWorkState = async (isWork) => {
     await AsyncStorage.setItem(STATE_KEY, JSON.stringify({ isWork }));
   };
@@ -45,10 +47,21 @@ export default function App() {
   const saveToDos = async (toSave) => {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   };
+  const resetToDosEditing = (loadToDos) => {
+    let newToDos = {};
+    Object.keys(loadToDos).map((key) => {
+      newToDos = {
+        ...newToDos,
+        [key]: { ...loadToDos[key], isEditing: false },
+      };
+    });
+    return newToDos;
+  };
   const loadToDos = async () => {
     try {
       const s = await AsyncStorage.getItem(STORAGE_KEY);
-      setToDos(JSON.parse(s));
+      const newToDos = resetToDosEditing(JSON.parse(s));
+      setToDos(newToDos);
     } catch (e) {
       // error
       console.log(e);
@@ -63,7 +76,6 @@ export default function App() {
       ...toDos,
       [Date.now()]: { text, working, isDone: false, isEditing: false },
     };
-    console.log(newToDos);
     setToDos(newToDos);
     await saveToDos(newToDos);
     setText("");
@@ -86,15 +98,35 @@ export default function App() {
   };
   const doneToDo = (key) => {
     let newToDos = { ...toDos };
-    if (newToDos[key].isDone) {
-      newToDos[key] = { ...newToDos[key], isDone: false };
-    } else {
-      newToDos[key] = { ...newToDos[key], isDone: true };
-    }
+    newToDos[key] = { ...newToDos[key], isDone: !newToDos[key].isDone };
     setToDos(newToDos);
+    saveToDos(newToDos);
   };
   const editToDo = (key) => {
-    console.log("edit todos");
+    setEditText(toDos[key].text);
+    let newToDos = resetToDosEditing(toDos);
+    newToDos[key] = { ...newToDos[key], isEditing: !newToDos[key].isEditing };
+    setToDos(newToDos);
+    saveToDos(newToDos);
+  };
+  const editDone = (key) => {
+    let newToDos = { ...toDos };
+    if (editText === "") {
+      newToDos[key] = { ...newToDos[key], isEditing: !newToDos[key].isEditing };
+      setToDos(newToDos);
+      saveToDos(newToDos);
+      return;
+    }
+    newToDos = {
+      ...newToDos,
+      [key]: {
+        ...newToDos[key],
+        text: editText,
+        isEditing: !newToDos[key].isEditing,
+      },
+    };
+    setToDos(newToDos);
+    saveToDos(newToDos);
   };
   useEffect(() => {
     loadWorkState();
@@ -133,46 +165,79 @@ export default function App() {
       <ScrollView>
         {Object.keys(toDos).map((key) =>
           toDos[key].working === working ? (
-            <View style={styles.toDo} key={key}>
-              <Text
-                style={
-                  !toDos[key].isDone
-                    ? styles.toDoText
-                    : {
-                        ...styles.toDoText,
-                        textDecorationLine: "line-through",
-                        color: theme.grey,
-                      }
-                }
-              >
-                {toDos[key].text}
-              </Text>
-              <View style={styles.toDoIcons}>
-                <TouchableOpacity onPress={() => doneToDo(key)}>
-                  <MaterialIcons
-                    style={styles.icon}
-                    name="done"
-                    size={24}
-                    color={theme.grey}
+            <View
+              style={{
+                ...styles.toDo,
+                paddingVertical: !toDos[key].isEditing ? 20 : 15,
+                paddingHorizontal: !toDos[key].isEditing ? 20 : 12,
+              }}
+              key={key}
+            >
+              {!toDos[key].isEditing ? (
+                <>
+                  <Text
+                    style={
+                      !toDos[key].isDone
+                        ? styles.toDoText
+                        : {
+                            ...styles.toDoText,
+                            textDecorationLine: "line-through",
+                            color: theme.grey,
+                          }
+                    }
+                  >
+                    {toDos[key].text}
+                  </Text>
+                  <View style={styles.toDoIcons}>
+                    {!toDos[key].isDone ? (
+                      <TouchableOpacity onPress={() => editToDo(key)}>
+                        <Feather
+                          style={{ ...styles.icon, paddingRight: 8 }}
+                          name="edit-2"
+                          size={20}
+                          color={theme.grey}
+                        />
+                      </TouchableOpacity>
+                    ) : null}
+                    <TouchableOpacity onPress={() => doneToDo(key)}>
+                      <MaterialIcons
+                        style={styles.icon}
+                        name="done"
+                        size={24}
+                        color={theme.grey}
+                      />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => deleteToDo(key)}>
+                      <FontAwesome
+                        style={{ ...styles.icon, paddingRight: 0 }}
+                        name="trash"
+                        size={20}
+                        color={theme.grey}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <TextInput
+                    returnKeyType="done"
+                    style={styles.editInput}
+                    value={editText}
+                    onChangeText={onChangeEditText}
+                    onSubmitEditing={() => editDone(key)}
+                    placeholder="Edit a To Do"
                   />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => editToDo(key)}>
-                  <Feather
-                    style={{ ...styles.icon, paddingRight: 8 }}
-                    name="edit-2"
-                    size={20}
-                    color={theme.grey}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => deleteToDo(key)}>
-                  <FontAwesome
-                    style={{ ...styles.icon, paddingRight: 0 }}
-                    name="trash"
-                    size={20}
-                    color={theme.grey}
-                  />
-                </TouchableOpacity>
-              </View>
+                  <TouchableOpacity onPress={() => editDone(key)}>
+                    <MaterialIcons
+                      style={styles.icon}
+                      name="done"
+                      size={24}
+                      color={theme.grey}
+                    />
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           ) : null
         )}
@@ -225,5 +290,13 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "500",
+  },
+  editInput: {
+    backgroundColor: "white",
+    width: "88%",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 30,
+    fontSize: 16,
   },
 });
