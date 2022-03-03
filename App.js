@@ -74,7 +74,14 @@ export default function App() {
     // save to do
     const newToDos = {
       ...toDos,
-      [Date.now()]: { text, working, isDone: false, isEditing: false },
+      [Date.now()]: {
+        text,
+        working,
+        isDone: false,
+        isEditing: false,
+        created: Date.now(),
+        updated: Date.now(),
+      },
     };
     setToDos(newToDos);
     await saveToDos(newToDos);

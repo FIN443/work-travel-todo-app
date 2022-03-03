@@ -7,13 +7,16 @@ Work 또는 Travel, 해야할 것 기록하는 앱
 - [x] 앱 재실행시, 마지막 상태가 Work 였는지 Travel 였는지 확인하고 그 상태에서 시작
 - [x] Done 기능 추가(Done이면 아래로 정렬)
 
-```json
+```javascript
 예시)
 Object {
-  "key": {
-    "text": "To Do",
-    "working": true,
-    "isDone": false, // 하나 더 추가
+  [Date.now()]: {
+    text: "Text",
+    working: true,
+    isDone: false,
+    isEditing: false,
+    created: Date.now(),
+    updated: Date.now(),
   },
   ...
 }
