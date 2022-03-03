@@ -117,13 +117,10 @@ export default function App() {
       saveToDos(newToDos);
       return;
     }
-    newToDos = {
-      ...newToDos,
-      [key]: {
-        ...newToDos[key],
-        text: editText,
-        isEditing: !newToDos[key].isEditing,
-      },
+    newToDos[key] = {
+      ...newToDos[key],
+      text: editText,
+      isEditing: !newToDos[key].isEditing,
     };
     setToDos(newToDos);
     saveToDos(newToDos);
